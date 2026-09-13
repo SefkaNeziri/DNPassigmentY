@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <RootNamespace>InMamoryRepositories</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\..\Server\Entities\Entities.csproj" />
+      <ProjectReference Include="..\RepositoryContracts\RepositoryContracts.csproj" />
+    </ItemGroup>
+
+</Project>
