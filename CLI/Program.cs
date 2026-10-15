@@ -1,9 +1,10 @@
-﻿using InMemoryRepositories;
+﻿using FileRepositories;
+using InMemoryRepositories;
 using RepositoryContracts;
 using UI;
 using RepositoryContracts;
 
-IUserRepository userRepository = new UserInMemoryRepository();
+IUserRepository userRepository = new UserFileRepository();
 IPostRepository postRepository = new PostInMemoryRepository();
 ICommentRepository commentRepository = new CommentInMemoryRepository();
 
