@@ -41,8 +41,7 @@ public class UserFileRepository: IUserRepository
         {
             existingUser.UserName = user.UserName;
             existingUser.Password = user.Password;
-            var json = JsonSerializer.Serialize(existingUser, new JsonSerializerOptions { WriteIndented = true });
-            File.WriteAllText(_filePath, json);
+            var json = JsonSerializer.Serialize(_users, new JsonSerializerOptions { WriteIndented = true });            File.WriteAllText(_filePath, json);
         }
         return Task.CompletedTask;
     }
