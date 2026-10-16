@@ -2,7 +2,7 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Server", "Server", "{6FC671D7-FED6-481F-9637-F11C04A726C0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Entities", "..\Server\Entities\Entities.csproj", "{3CE9DB12-C3AF-42BD-9EBF-E4621242EA44}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Entities", "Entities\Entities.csproj", "{3CE9DB12-C3AF-42BD-9EBF-E4621242EA44}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ClassLibrary1", "ClassLibrary1\ClassLibrary1.csproj", "{3C6F299D-CC0F-4993-88BB-572813C2B823}"
 EndProject
