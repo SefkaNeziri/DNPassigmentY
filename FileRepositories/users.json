@@ -13,5 +13,15 @@
     "Id": 0,
     "UserName": "MNM",
     "Password": "KNM"
+  },
+  {
+    "Id": 1,
+    "UserName": "TestKorisnik",
+    "Password": "test123"
+  },
+  {
+    "Id": 2,
+    "UserName": "TestKorisnik",
+    "Password": "test123"
   }
 ]

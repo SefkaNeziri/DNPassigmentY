@@ -1,0 +1,61 @@
+
+### Create a new post
+POST http://localhost:5265/api/posts
+Content-Type: application/json
+
+{
+  "title": "My First Post",
+  "body": "This is a test of our Web API.",
+  "userId": 1
+}
+
+### Get all posts
+GET http://localhost:5265/api/posts
+Accept: application/json
+
+### Get a post by ID
+GET http://localhost:5265/api/posts/1
+Accept: application/json
+
+
+### Create a new comment
+POST http://localhost:5265/api/comments
+Content-Type: application/json
+
+{
+  "body": "This is my first comment.",
+  "userId": 1,
+  "postId": 1
+}
+
+### Get all comments
+GET http://localhost:5265/api/comments
+Accept: application/json
+
+### Get comments for post 1
+GET http://localhost:5265/api/comments?postId=1
+Accept: application/json
+
+
+### Update an existing post
+PUT http://localhost:5265/api/posts/1
+Content-Type: application/json
+
+{
+  "id": 1,
+  "title": "My Updated Post",
+  "body": "This post has been updated using the Web API.",
+  "userId": 1
+}
+
+### Verify the updated post
+GET http://localhost:5265/api/posts/1
+Accept: application/json
+
+
+### Delete post with ID 1
+DELETE http://localhost:5265/api/posts/1
+
+### Verify that the post was deleted
+GET http://localhost:5265/api/posts/1
+Accept: application/json

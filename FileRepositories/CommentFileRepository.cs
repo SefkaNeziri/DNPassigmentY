@@ -1,81 +1,88 @@
-﻿
-using System.Text.Json; // Omogućava rad sa JSON formatom.
-using Entities; // Omogućava korišćenje klase Comment.
-using RepositoryContracts; // Omogućava korišćenje ICommentRepository.
+﻿using System.Text.Json; // Omogućava rad sa JSON formatom.
+using Entities; // Sadrži klasu Comment.
+using RepositoryContracts; // Sadrži interfejs ICommentRepository.
 
-namespace FileRepositories; // Namespace za naše file repository klase.
+namespace FileRepositories;
 
 public class CommentFileRepository : ICommentRepository
 {
-    // Lista komentara koje smo učitali ili napravili.
-    private List<Comment> _comments = new List<Comment>();
-
-    // Određujemo gde će se nalaziti comments.json.
+    // Putanja do JSON fajla u kojem čuvamo komentare.
     private readonly string _filePath =
         Path.Combine(AppContext.BaseDirectory, "comments.json");
 
-    // Konstruktor učitava komentare kada napravimo repository.
+    // Konstruktor: pravi prazan JSON fajl ako ne postoji.
     public CommentFileRepository()
     {
-        // Proveravamo da li fajl već postoji.
-        if (File.Exists(_filePath))
+        if (!File.Exists(_filePath))
         {
-            // Čitamo tekst iz comments.json.
-            string json = File.ReadAllText(_filePath);
-
-            // Ako je fajl prazan, prekidamo učitavanje.
-            if (string.IsNullOrWhiteSpace(json))
-            {
-                return;
-            }
-
-            // Pretvaramo JSON tekst u listu komentara.
-            // Ako dobijemo null, uzimamo praznu listu.
-            _comments = JsonSerializer.Deserialize<List<Comment>>(json)
-                        ?? new List<Comment>();
+            // [] predstavlja praznu listu u JSON formatu.
+            File.WriteAllText(_filePath, "[]");
         }
     }
 
-    // Privatna pomoćna metoda za čuvanje komentara.
-    private void Save()
+    // Asinhrono učitavanje svih komentara iz fajla.
+    private async Task<List<Comment>> LoadAsync()
     {
-        // Pretvaramo sve komentare u čitljiv JSON tekst.
+        // Čitamo sadržaj comments.json fajla.
+        string json = await File.ReadAllTextAsync(_filePath);
+
+        // Ako je fajl prazan, vraćamo praznu listu.
+        if (string.IsNullOrWhiteSpace(json))
+        {
+            return new List<Comment>();
+        }
+
+        // Pretvaramo JSON tekst u listu Comment objekata.
+        return JsonSerializer.Deserialize<List<Comment>>(json)
+               ?? new List<Comment>();
+    }
+
+    // Asinhrono čuvanje cele liste komentara u JSON fajl.
+    private async Task SaveAsync(List<Comment> comments)
+    {
+        // Pretvaramo listu komentara u lepo formatiran JSON tekst.
         string json = JsonSerializer.Serialize(
-            _comments,
+            comments,
             new JsonSerializerOptions { WriteIndented = true });
 
-        // Upisujemo tekst u comments.json.
-        File.WriteAllText(_filePath, json);
+        // Asinhrono upisujemo JSON tekst u fajl.
+        await File.WriteAllTextAsync(_filePath, json);
     }
 
-    // Dodajemo novi komentar.
-    public Task<Comment> AddAsync(Comment comment)
+    // Dodavanje novog komentara.
+    public async Task<Comment> AddAsync(Comment comment)
     {
-        // Dodeljujemo novi, jedinstveni ID.
-        // Ako je lista prazna, ID je 1.
-        // Inače je za jedan veći od najvećeg postojećeg.
-        comment.Id = _comments.Count == 0
+        // Učitavamo postojeće komentare.
+        List<Comment> comments = await LoadAsync();
+
+        // Dodeljujemo novi ID.
+        // Ako nema komentara, prvi dobija ID 1.
+        // Inače uzimamo najveći postojeći ID i dodajemo 1.
+        comment.Id = comments.Count == 0
             ? 1
-            : _comments.Max(c => c.Id) + 1;
+            : comments.Max(c => c.Id) + 1;
 
-        // Dodajemo komentar u listu.
-        _comments.Add(comment);
+        // Dodajemo novi komentar u listu.
+        comments.Add(comment);
 
-        // Čuvamo sve komentare u comments.json.
-        Save();
+        // Čuvamo ažuriranu listu u fajl.
+        await SaveAsync(comments);
 
-        // Vraćamo dodati komentar.
-        return Task.FromResult(comment);
+        // Vraćamo novododati komentar.
+        return comment;
     }
 
-    // Menjamo postojeći komentar.
-    public Task UpdateAsync(Comment comment)
+    // Izmena postojećeg komentara.
+    public async Task UpdateAsync(Comment comment)
     {
-        // Pronalazimo komentar sa istim ID brojem.
-        Comment? existingComment =
-            _comments.FirstOrDefault(c => c.Id == comment.Id);
+        // Učitavamo postojeće komentare.
+        List<Comment> comments = await LoadAsync();
 
-        // Ako komentar nije pronađen, prijavljujemo grešku.
+        // Tražimo komentar sa istim ID-jem.
+        Comment? existingComment =
+            comments.FirstOrDefault(c => c.Id == comment.Id);
+
+        // Ako komentar ne postoji, prijavljujemo grešku.
         if (existingComment == null)
         {
             throw new Exception("Comment not found.");
@@ -90,42 +97,19 @@ public class CommentFileRepository : ICommentRepository
         // Menjamo ID objave kojoj komentar pripada.
         existingComment.PostId = comment.PostId;
 
-        // Čuvamo promene u fajlu.
-        Save();
-
-        // Vraćamo završen Task.
-        return Task.CompletedTask;
+        // Čuvamo celu izmenjenu listu komentara.
+        await SaveAsync(comments);
     }
 
-    // Brišemo komentar na osnovu njegovog ID-a.
-    public Task DeleteAsync(int id)
+    // Brisanje komentara po ID-ju.
+    public async Task DeleteAsync(int id)
     {
-        // Tražimo komentar sa datim ID brojem.
+        // Učitavamo postojeće komentare.
+        List<Comment> comments = await LoadAsync();
+
+        // Tražimo komentar koji treba obrisati.
         Comment? existingComment =
-            _comments.FirstOrDefault(c => c.Id == id);
-
-        // Ako ga nema, prijavljujemo grešku.
-        if (existingComment == null)
-        {
-            throw new Exception("Comment not found.");
-        }
-
-        // Uklanjamo komentar iz liste.
-        _comments.Remove(existingComment);
-
-        // Čuvamo ažuriranu listu.
-        Save();
-
-        // Vraćamo završen Task.
-        return Task.CompletedTask;
-    }
-
-    // Vraćamo jedan komentar na osnovu njegovog ID-a.
-    public Task<Comment> GetSingleAsync(int id)
-    {
-        // Pronalazimo komentar.
-        Comment? existingComment =
-            _comments.FirstOrDefault(c => c.Id == id);
+            comments.FirstOrDefault(c => c.Id == id);
 
         // Ako komentar ne postoji, prijavljujemo grešku.
         if (existingComment == null)
@@ -133,14 +117,43 @@ public class CommentFileRepository : ICommentRepository
             throw new Exception("Comment not found.");
         }
 
-        // Vraćamo pronađeni komentar kroz Task.
-        return Task.FromResult(existingComment);
+        // Uklanjamo komentar iz liste.
+        comments.Remove(existingComment);
+
+        // Čuvamo novu listu bez tog komentara.
+        await SaveAsync(comments);
     }
 
-    // Vraćamo sve komentare.
+    // Vraća jedan komentar prema ID-ju.
+    public async Task<Comment> GetSingleAsync(int id)
+    {
+        // Učitavamo komentare iz JSON fajla.
+        List<Comment> comments = await LoadAsync();
+
+        // Tražimo komentar sa traženim ID-jem.
+        Comment? existingComment =
+            comments.FirstOrDefault(c => c.Id == id);
+
+        // Ako komentar nije pronađen, prijavljujemo grešku.
+        if (existingComment == null)
+        {
+            throw new Exception("Comment not found.");
+        }
+
+        // Vraćamo pronađeni komentar.
+        return existingComment;
+    }
+
+    // Vraća sve komentare.
     public IQueryable<Comment> GetMany()
     {
-        // Pretvaramo listu u oblik koji interfejs zahteva.
-        return _comments.AsQueryable();
+        // Ova metoda ne može direktno koristiti await
+        // jer interfejs zahteva IQueryable<Comment>.
+        // Zato ručno sačekamo rezultat asinhrone metode.
+        List<Comment> comments =
+            LoadAsync().GetAwaiter().GetResult();
+
+        // Pretvaramo listu u IQueryable<Comment>.
+        return comments.AsQueryable();
     }
 }
