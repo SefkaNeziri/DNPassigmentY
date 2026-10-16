@@ -29,6 +29,7 @@ public class CliApp
             Console.WriteLine("3. Add comment");
             Console.WriteLine("4. View posts");
             Console.WriteLine("5. View one post");
+            Console.WriteLine("6. View users");
             Console.WriteLine("0. Exit");
 
             Console.Write("Choose option: ");
@@ -121,6 +122,14 @@ public class CliApp
                         Console.WriteLine($"Comment ID: {comment.Id}");
                         Console.WriteLine($"Body: {comment.Body}");
                     }
+                }
+            }
+            else if (choice == "6")
+            {
+                Console.WriteLine("Users:");
+                foreach (User user in userRepository.GetMany())
+                {
+                    Console.WriteLine($"ID: {user.Id} | Username: {user.UserName}");
                 }
             }
             else if (choice == "0")
