@@ -1,0 +1,50 @@
+﻿@* Gornji deo navigacionog menija. *@
+<div class="top-row ps-3 navbar navbar-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="">Forum App</a>
+    </div>
+</div>
+
+@* Dugme za otvaranje i zatvaranje menija. *@
+<input type="checkbox"
+       title="Navigation menu"
+       class="navbar-toggler" />
+
+@* Glavni navigacioni meni. *@
+<div class="nav-scrollable"
+     onclick="document.querySelector('.navbar-toggler').click()">
+
+    <nav class="nav flex-column">
+
+        @* Početna stranica. *@
+        <div class="nav-item px-3">
+            <NavLink class="nav-link"
+                     href=""
+                     Match="NavLinkMatch.All">
+                Home
+            </NavLink>
+        </div>
+
+        @* Prikaz i kreiranje korisnika. *@
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="users">
+                Users
+            </NavLink>
+        </div>
+
+        @* Lista svih objava. *@
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="posts">
+                Posts
+            </NavLink>
+        </div>
+
+        @* Kreiranje nove objave. *@
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="create-post">
+                Create Post
+            </NavLink>
+        </div>
+
+    </nav>
+</div>

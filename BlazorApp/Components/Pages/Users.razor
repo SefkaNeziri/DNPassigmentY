@@ -1,0 +1,147 @@
+﻿
+@page "/users"
+@using ApiContracts
+@using BlazorApp.Services
+@inject UserService UserService
+
+<PageTitle>Users</PageTitle>
+
+<h3>Users</h3>
+
+@* Obrazac za kreiranje novog korisnika. *@
+<h4>Create New User</h4>
+
+<div class="mb-3">
+    <label>Username</label>
+    <input class="form-control" @bind="userName" />
+</div>
+
+<div class="mb-3">
+    <label>Password</label>
+    <input type="password"
+           class="form-control"
+           @bind="password" />
+</div>
+
+@* Dugme poziva metodu za kreiranje korisnika. *@
+<button class="btn btn-primary" @onclick="CreateUser">
+    Create User
+</button>
+
+@* Prikazujemo poruku ako dođe do greške. *@
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <p class="text-danger mt-3">@errorMessage</p>
+}
+
+<hr />
+
+<h4>All Users</h4>
+
+@* Prikazujemo poruku dok učitavamo korisnike. *@
+@if (loading)
+{
+    <p>Loading users...</p>
+}
+else if (users.Count == 0)
+{
+    <p>No users found.</p>
+}
+else
+{
+    @* Prikazujemo korisnike u tabeli. *@
+    <table class="table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Username</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            @foreach (UserDto user in users)
+            {
+                <tr>
+                    <td>@user.Id</td>
+                    <td>@user.UserName</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    // Lista svih korisnika.
+    private List<UserDto> users = new();
+
+    // Podaci koje unosimo u obrazac.
+    private string userName = "";
+    private string password = "";
+
+    // Poruka o grešci.
+    private string errorMessage = "";
+
+    // Proveravamo da li se podaci još učitavaju.
+    private bool loading = true;
+
+    // Automatski se poziva kada otvorimo stranicu.
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadUsers();
+    }
+
+    // Preuzimamo korisnike iz Web API-ja.
+    private async Task LoadUsers()
+    {
+        try
+        {
+            users = await UserService.GetUsersAsync();
+            errorMessage = "";
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    // Kreiramo korisnika kada kliknemo na dugme.
+    private async Task CreateUser()
+    {
+        // Proveravamo da li su oba polja popunjena.
+        if (string.IsNullOrWhiteSpace(userName) ||
+            string.IsNullOrWhiteSpace(password))
+        {
+            errorMessage = "Please enter username and password.";
+            return;
+        }
+
+        try
+        {
+            // Pravimo DTO sa podacima novog korisnika.
+            CreateUserDto request = new()
+            {
+                UserName = userName,
+                Password = password
+            };
+
+            // Šaljemo podatke našem servisu.
+            await UserService.AddUserAsync(request);
+
+            // Praznimo polja nakon uspešnog kreiranja.
+            userName = "";
+            password = "";
+            errorMessage = "";
+
+            // Osvežavamo listu korisnika.
+            await LoadUsers();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+    }
+}

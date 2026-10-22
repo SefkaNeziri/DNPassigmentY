@@ -1,0 +1,188 @@
+﻿@page "/posts/{Id:int}"
+@using ApiContracts
+@using BlazorApp.Services
+
+@inject IPostService PostService
+@inject IUserService UserService
+@inject ICommentService CommentService
+
+<PageTitle>Post Details</PageTitle>
+
+@if (loading)
+{
+    <p>Loading post...</p>
+}
+else if (post == null)
+{
+    <p class="text-danger">@errorMessage</p>
+}
+else
+{
+    @* Naslov i sadržaj objave. *@
+    <h3>@post.Title</h3>
+
+    <p>
+        <strong>Author:</strong> @authorName
+    </p>
+
+    <p style="white-space: pre-wrap;">@post.Body</p>
+
+    <hr />
+
+    <h4>Comments</h4>
+
+    @* Prikazujemo sve komentare za ovu objavu. *@
+    @if (comments.Count == 0)
+    {
+        <p>No comments yet.</p>
+    }
+    else
+    {
+        @foreach (CommentDto comment in comments)
+        {
+            <div class="card mb-2">
+                <div class="card-body">
+                    <p>@comment.Body</p>
+                    <small class="text-muted">
+                        User ID: @comment.UserId
+                    </small>
+                </div>
+            </div>
+        }
+    }
+
+    <hr />
+
+    <h4>Add Comment</h4>
+
+    @* Polje za unos novog komentara. *@
+    <div class="mb-3">
+        <textarea class="form-control"
+                  rows="4"
+                  @bind="newComment"></textarea>
+    </div>
+
+    @* Dugme šalje komentar Web API-ju. *@
+    <button class="btn btn-primary"
+            @onclick="AddComment"
+            disabled="@saving">
+        Add Comment
+    </button>
+
+    @* Poruka ako dođe do greške. *@
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <p class="text-danger mt-3">@errorMessage</p>
+    }
+}
+
+<div class="mt-3">
+    <a href="/posts">Back to Posts</a>
+</div>
+
+@code {
+    // ID objave preuzimamo iz adrese /posts/1.
+    [Parameter]
+    public int Id { get; set; }
+
+    // Objava koju trenutno prikazujemo.
+    private PostDto? post;
+
+    // Ime autora objave.
+    private string authorName = "";
+
+    // Komentari koji pripadaju objavi.
+    private List<CommentDto> comments = new();
+
+    // Tekst novog komentara.
+    private string newComment = "";
+
+    // Stanje učitavanja i čuvanja.
+    private bool loading = true;
+    private bool saving = false;
+
+    // Poruka o grešci.
+    private string errorMessage = "";
+
+    // Učitavamo podatke kada se promeni ID objave.
+    protected override async Task OnParametersSetAsync()
+    {
+        loading = true;
+        errorMessage = "";
+        post = null;
+        comments = new();
+
+        try
+        {
+            // Preuzimamo izabranu objavu.
+            post = await PostService.GetPostAsync(Id);
+
+            // Preuzimamo ime autora prema UserId.
+            try
+            {
+                UserDto author =
+                    await UserService.GetUserAsync(post.UserId);
+
+                authorName = author.UserName;
+            }
+            catch
+            {
+                // Ako autor nije pronađen, prikazujemo njegov ID.
+                authorName = $"User {post.UserId}";
+            }
+
+            // Učitavamo komentare ove objave.
+            comments = await CommentService.GetCommentsAsync(Id);
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    // Dodajemo novi komentar.
+    private async Task AddComment()
+    {
+        if (string.IsNullOrWhiteSpace(newComment))
+        {
+            errorMessage = "Please enter a comment.";
+            return;
+        }
+
+        saving = true;
+        errorMessage = "";
+
+        try
+        {
+            // Kreiramo komentar za trenutnu objavu.
+            // Za sada koristimo korisnika sa ID-jem 1.
+            CreateCommentDto request = new()
+            {
+                Body = newComment,
+                UserId = 1,
+                PostId = Id
+            };
+
+            // Šaljemo komentar serveru.
+            await CommentService.AddCommentAsync(request);
+
+            // Praznimo polje za unos.
+            newComment = "";
+
+            // Ponovo preuzimamo komentare.
+            comments = await CommentService.GetCommentsAsync(Id);
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+        finally
+        {
+            saving = false;
+        }
+    }
+}

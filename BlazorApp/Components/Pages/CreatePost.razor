@@ -1,0 +1,92 @@
+﻿@page "/create-post"
+@using ApiContracts
+@using BlazorApp.Services
+@inject IPostService PostService
+@inject NavigationManager Navigation
+
+<PageTitle>Create Post</PageTitle>
+
+<h3>Create New Post</h3>
+
+@* Polje za naslov objave. *@
+<div class="mb-3">
+    <label>Title</label>
+    <input class="form-control" @bind="title" />
+</div>
+
+@* Polje za sadržaj objave. *@
+<div class="mb-3">
+    <label>Body</label>
+    <textarea class="form-control"
+              rows="6"
+              @bind="body"></textarea>
+</div>
+
+@* Dugme kreira novu objavu. *@
+<button class="btn btn-primary"
+        @onclick="SubmitPost"
+        disabled="@saving">
+    Create Post
+</button>
+
+<a class="btn btn-secondary ms-2" href="/posts">
+    Cancel
+</a>
+
+@* Prikazujemo grešku ako zahtev ne uspe. *@
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <p class="text-danger mt-3">@errorMessage</p>
+}
+
+@code {
+    // Podaci iz obrasca.
+    private string title = "";
+    private string body = "";
+
+    // Sprečavamo ponovljeni klik dok čuvamo objavu.
+    private bool saving = false;
+
+    // Poruka o grešci.
+    private string errorMessage = "";
+
+    // Metoda se poziva klikom na Create Post.
+    private async Task SubmitPost()
+    {
+        // Proveravamo da li su polja popunjena.
+        if (string.IsNullOrWhiteSpace(title) ||
+            string.IsNullOrWhiteSpace(body))
+        {
+            errorMessage = "Please enter title and body.";
+            return;
+        }
+
+        saving = true;
+        errorMessage = "";
+
+        try
+        {
+            // Privremeno koristimo korisnika sa ID-jem 1.
+            CreatePostDto request = new()
+            {
+                Title = title,
+                Body = body,
+                UserId = 1
+            };
+
+            // Šaljemo novu objavu Web API-ju.
+            PostDto createdPost = await PostService.AddPostAsync(request);
+
+            // Otvaramo detalje upravo kreirane objave.
+            Navigation.NavigateTo($"/posts/{createdPost.Id}");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+        finally
+        {
+            saving = false;
+        }
+    }
+}

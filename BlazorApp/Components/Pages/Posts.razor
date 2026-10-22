@@ -1,0 +1,73 @@
+﻿@page "/posts"
+@using ApiContracts
+@using BlazorApp.Services
+@inject IPostService PostService
+
+<PageTitle>Posts</PageTitle>
+
+<h3>Forum Posts</h3>
+
+@* Link za kreiranje nove objave. *@
+<a class="btn btn-primary mb-3" href="/create-post">
+    Create New Post
+</a>
+
+@* Poruka dok čekamo podatke. *@
+@if (loading)
+{
+    <p>Loading posts...</p>
+}
+else if (!string.IsNullOrEmpty(errorMessage))
+{
+    <p class="text-danger">@errorMessage</p>
+}
+else if (posts.Count == 0)
+{
+    <p>No posts found.</p>
+}
+else
+{
+    @* Prikazujemo svaku objavu u posebnoj kartici. *@
+    @foreach (PostDto post in posts)
+    {
+        <div class="card mb-3">
+            <div class="card-body">
+                <h5 class="card-title">@post.Title</h5>
+
+                <p class="card-text">@post.Body</p>
+
+                @* Otvaramo detalje izabrane objave. *@
+                <a class="btn btn-outline-primary"
+                   href="@($"/posts/{post.Id}")">
+                    View Details
+                </a>
+            </div>
+        </div>
+    }
+}
+
+@code {
+    // Lista objava koje dobijamo od servera.
+    private List<PostDto> posts = new();
+
+    // Pratimo učitavanje i eventualne greške.
+    private bool loading = true;
+    private string errorMessage = "";
+
+    // Učitavamo objave kada otvorimo stranicu.
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            posts = await PostService.GetPostsAsync();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+}
