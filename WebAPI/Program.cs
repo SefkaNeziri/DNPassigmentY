@@ -1,44 +1,39 @@
-using Microsoft.AspNetCore.Builder; // Omogućava podešavanje Web API aplikacije.
-using FileRepositories; // klase koje cuvaju json fajlove
-using RepositoryContracts; //interfejsi za korisnike objave i komentare
+using EfcRepositories;
+using Microsoft.EntityFrameworkCore;
+using RepositoryContracts;
 
-
-// Kreiramo Web API aplikaciju.
 var builder = WebApplication.CreateBuilder(args);
 
-// Registrujemo podršku za kontrolere.
-// Kontroleri će obrađivati HTTP zahteve.
+// Registrujemo Web API kontrolere.
 builder.Services.AddControllers();
 
-// Kada Web API zatraži IUserRepository,
-// koristićemo UserFileRepository.
-builder.Services.AddSingleton<IUserRepository, UserFileRepository>();
-
-// Kada zatraži IPostRepository,
-// koristićemo PostFileRepository.
-builder.Services.AddSingleton<IPostRepository, PostFileRepository>();
-
-// Kada zatraži ICommentRepository,
-// koristićemo CommentFileRepository.
-builder.Services.AddSingleton<ICommentRepository, CommentFileRepository>();
-
-// Zadržavamo podršku za OpenAPI dokumentaciju.
+// Dodajemo podrsku za OpenAPI dokumentaciju.
 builder.Services.AddOpenApi();
 
-// Završavamo podešavanje i pravimo aplikaciju.
+// Registrujemo DbContext i povezujemo ga sa SQLite bazom.
+builder.Services.AddDbContext<ForumDbContext>(options =>
+    options.UseSqlite(ForumDatabase.GetConnectionString()));
+
+// Registrujemo nove Entity Framework Core repozitorijume.
+// Oni zamenjuju prethodne repozitorijume koji su koristili JSON.
+builder.Services.AddScoped<IUserRepository, EfcUserRepository>();
+builder.Services.AddScoped<IPostRepository, EfcPostRepository>();
+builder.Services.AddScoped<ICommentRepository, EfcCommentRepository>();
+
+// Kreiramo aplikaciju.
 var app = builder.Build();
 
-// OpenAPI dokumentacija je dostupna u Development režimu.
+// OpenAPI dokumentacija dostupna je u Development rezimu.
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
 
-// Omogućavamo preusmeravanje HTTP zahteva na HTTPS.
+// Omogucavamo HTTPS preusmeravanje.
 app.UseHttpsRedirection();
 
-// Povezujemo rute sa metodama u našim kontrolerima.
+// Povezujemo HTTP adrese sa metodama u kontrolerima.
 app.MapControllers();
 
-// Pokrećemo Web API server.
+// Pokrecemo Web API.
 app.Run();

@@ -30,13 +30,15 @@ public class UsersController : ControllerBase
         // Uzimamo sve korisnike iz repozitorijuma.
         IQueryable<User> users = _userRepository.GetMany();
 
-        // Ako je unet tekst za pretragu, filtriramo korisnike.
+        // Ako je korisnik uneo tekst, filtriramo korisnike.
         if (!string.IsNullOrWhiteSpace(username))
         {
+            // Pretvaramo tekst za pretragu u mala slova.
+            string search = username.ToLower();
+
+            // EF Core moze prevesti ovaj izraz u SQL upit.
             users = users.Where(u =>
-                u.UserName.Contains(
-                    username,
-                    StringComparison.OrdinalIgnoreCase));
+                u.UserName.ToLower().Contains(search));
         }
 
         // Pretvaramo User objekte u UserDto.

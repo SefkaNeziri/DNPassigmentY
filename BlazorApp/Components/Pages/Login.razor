@@ -1,0 +1,107 @@
+﻿
+@page "/login"
+@using BlazorApp.Auth
+@inject SimpleAuthProvider AuthProvider
+@inject NavigationManager Navigation
+
+<PageTitle>Login</PageTitle>
+
+<h3>Login</h3>
+
+@* Proveravamo da li je korisnik prijavljen. *@
+<AuthorizeView>
+
+    <NotAuthorized>
+
+        @* Polje za korisnicko ime. *@
+        <div class="mb-3">
+            <label>Username</label>
+            <input class="form-control"
+                   @bind="userName" />
+        </div>
+
+        @* Polje za lozinku. *@
+        <div class="mb-3">
+            <label>Password</label>
+            <input type="password"
+                   class="form-control"
+                   @bind="password" />
+        </div>
+
+        @* Dugme za prijavljivanje. *@
+        <button class="btn btn-primary"
+                @onclick="LoginAsync"
+                disabled="@loggingIn">
+            Login
+        </button>
+
+        @* Prikazujemo poruku ako prijavljivanje nije uspelo. *@
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <p class="text-danger mt-3">@errorMessage</p>
+        }
+
+    </NotAuthorized>
+
+    <Authorized>
+
+        @* Prikazujemo ime prijavljenog korisnika. *@
+        <h4>Welcome, @context.User.Identity?.Name!</h4>
+
+        <button class="btn btn-secondary"
+                @onclick="Logout">
+            Logout
+        </button>
+
+    </Authorized>
+
+</AuthorizeView>
+
+@code {
+    // Podaci koje korisnik unosi.
+    private string userName = "";
+    private string password = "";
+
+    // Poruka o gresci i stanje dugmeta.
+    private string errorMessage = "";
+    private bool loggingIn = false;
+
+    // Ovu metodu pozivamo klikom na Login.
+    private async Task LoginAsync()
+    {
+        if (string.IsNullOrWhiteSpace(userName) ||
+            string.IsNullOrWhiteSpace(password))
+        {
+            errorMessage = "Enter username and password.";
+            return;
+        }
+
+        loggingIn = true;
+        errorMessage = "";
+
+        try
+        {
+            // Proveravamo podatke preko naseg AuthProvider-a.
+            await AuthProvider.LoginAsync(userName, password);
+
+            // Nakon uspesnog prijavljivanja otvaramo Home.
+            Navigation.NavigateTo("/");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+        }
+        finally
+        {
+            loggingIn = false;
+        }
+    }
+
+    // Odjavljujemo trenutnog korisnika.
+    private void Logout()
+    {
+        AuthProvider.Logout();
+
+        Navigation.NavigateTo("/");
+    }
+}

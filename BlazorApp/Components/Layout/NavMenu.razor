@@ -1,4 +1,9 @@
-﻿@* Gornji deo navigacionog menija. *@
+﻿
+@using BlazorApp.Auth
+@inject SimpleAuthProvider AuthProvider
+@inject NavigationManager Navigation
+
+@* Gornji deo navigacionog menija. *@
 <div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
         <a class="navbar-brand" href="">Forum App</a>
@@ -16,7 +21,7 @@
 
     <nav class="nav flex-column">
 
-        @* Početna stranica. *@
+        @* Pocetna stranica. *@
         <div class="nav-item px-3">
             <NavLink class="nav-link"
                      href=""
@@ -25,26 +30,67 @@
             </NavLink>
         </div>
 
-        @* Prikaz i kreiranje korisnika. *@
+        @* Stranica za korisnike. *@
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="users">
                 Users
             </NavLink>
         </div>
 
-        @* Lista svih objava. *@
+        @* Pregled svih objava. *@
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="posts">
                 Posts
             </NavLink>
         </div>
 
-        @* Kreiranje nove objave. *@
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="create-post">
-                Create Post
-            </NavLink>
-        </div>
+        @* Kreiranje objave samo za prijavljene korisnike. *@
+        <AuthorizeView>
+            <Authorized>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="create-post">
+                        Create Post
+                    </NavLink>
+                </div>
+            </Authorized>
+        </AuthorizeView>
+
+        @* Prikazujemo Login ili Logout prema stanju korisnika. *@
+        <AuthorizeView>
+            <Authorized Context="loggedInUser">
+                <div class="nav-item px-3">
+                    <span class="nav-link">
+                        Hello, @loggedInUser.User.Identity?.Name
+                    </span>
+                </div>
+
+                <div class="nav-item px-3">
+                    <button class="nav-link btn btn-link"
+                            @onclick="Logout">
+                        Logout
+                    </button>
+                </div>
+            </Authorized>
+
+            <NotAuthorized>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="login">
+                        Login
+                    </NavLink>
+                </div>
+            </NotAuthorized>
+        </AuthorizeView>
 
     </nav>
 </div>
+
+@code {
+    // Odjavljujemo korisnika iz aplikacije.
+    private void Logout()
+    {
+        AuthProvider.Logout();
+
+        // Vracamo korisnika na pocetnu stranicu.
+        Navigation.NavigateTo("/");
+    }
+}

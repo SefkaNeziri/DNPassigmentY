@@ -1,6 +1,31 @@
-﻿<Router AppAssembly="typeof(Program).Assembly" NotFoundPage="typeof(Pages.NotFound)">
-    <Found Context="routeData">
-        <RouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)"/>
-        <FocusOnNavigate RouteData="routeData" Selector="h1"/>
-    </Found>
-</Router>
+﻿@* Omogucavamo svim stranicama pristup informacijama o prijavljenom korisniku. *@
+<CascadingAuthenticationState>
+
+    @* Router pronalazi odgovarajucu stranicu na osnovu URL adrese. *@
+    <Router AppAssembly="typeof(Program).Assembly"
+            NotFoundPage="typeof(Pages.NotFound)">
+
+        <Found Context="routeData">
+
+            @* Proveravamo da li korisnik ima pravo da otvori stranicu. *@
+            <AuthorizeRouteView RouteData="@routeData"
+                                DefaultLayout="@typeof(Layout.MainLayout)">
+
+                @* Ovaj tekst se prikazuje ako korisnik nema pristup. *@
+                <NotAuthorized>
+                    <h3>Access Denied</h3>
+                    <p>You must log in to access this page.</p>
+                    <a href="/login">Go to Login</a>
+                </NotAuthorized>
+
+            </AuthorizeRouteView>
+
+            @* Postavljamo fokus na naslov prilikom navigacije. *@
+            <FocusOnNavigate RouteData="@routeData"
+                             Selector="h1"/>
+
+        </Found>
+
+    </Router>
+
+</CascadingAuthenticationState>
